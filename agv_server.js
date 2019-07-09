@@ -109,7 +109,7 @@ app.post("/test", function(req, res) {
         }
 
         res.end();  
-        console.log(makeid(6));
+        //console.log(makeid(6));
         
         //receives request from manager
     } else if (src == "manager") {
