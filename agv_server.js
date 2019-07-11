@@ -15,6 +15,8 @@ var movingArray = [];
 
 var typeID = {'status':'0', 'station_leave':'1', 'station_arrive':'2', 'message':'3'};
 
+let agvKeys = ['xxxyyyzzz', 'qqqwwweee', 'pppwwwddd', 'eeerrrggg'];
+
 // var con = mysql.createConnection({
 //     host: "192.168.1.70",
 //     user: "esteban",
@@ -30,6 +32,7 @@ var typeID = {'status':'0', 'station_leave':'1', 'station_arrive':'2', 'message'
 //     console.log(result);
 // });
 
+//middleware
 app.use(myParser.urlencoded({ extended: true }));
 
 app.post("/test", function(req, res) {
@@ -37,105 +40,110 @@ app.post("/test", function(req, res) {
     var jsonString = JSON.stringify(req.body);
 
     var strArray = jsonString.split("\"");
-    console.log(jsonString);
-    //console.log(agvResponse.src);
-    src = strArray[3];
+    
+    if (agvKeys.includes(req.body.key)){
+        console.log(jsonString);
+        //console.log(agvResponse.src);
+        src = strArray[3];
 
-    //receives request from agv
-    if (src == "agv") {
-        var agvorigin = strArray[11];
-        var typeID_agv = strArray[7];
-        var moving_agv = strArray[19];
+        //receives request from agv
+        if (src == "agv") {
+            var agvorigin = strArray[11];
+            var typeID_agv = strArray[7];
+            var moving_agv = strArray[19];
 
-        if (typeID_agv == typeID.status && agvorigin == agv2receive){
+            if (typeID_agv == typeID.status && agvorigin == agv2receive){
 
-            res.send(agvResponse);
-            agv2sendrouteid = agv2receive;
-            resetJSON(agvResponse);
-        }
-
-        else if (typeID_agv == typeID.station_leave && agvorigin == agv2sendrouteid){
-            cmd = "SERVER_DATA";
-            agvResponse["agvnumber"] = agv2sendrouteid;
-            agvResponse["command"] = cmd;
-            agvResponse["routeid"] = makeid(7);
-            res.send(agvResponse);
-
-            console.log("\nAGV NUMBER #" + agv2sendrouteid + " IS LEAVING " + strArray[23] + ".");
-            console.log("\nClock: " + strArray[15] +'\n');
-            var batchArray = strArray[19].split(",");
-            for (i=1; i<batchArray.length + 1; i++){
-                console.log("Batch #" + i + " = " + batchArray[i-1]);
-            }
-            console.log("");
-
-            resetJSON(agvResponse);
-            agv2sendrouteid = "0";
-
-        }
-
-        else if (typeID_agv == typeID.station_arrive){
-            res.send(agvResponse);
-
-            console.log("\nAGV NUMBER #" + strArray[11] + " ARRIVED TO " + strArray[23] + ".");
-            console.log("\nClock: " + strArray[15] + '\n');
-
-            var batchArray = strArray[19].split(",");
-            for (i=1; i<batchArray.length + 1; i++){
-                console.log("Batch #" + i + " = " + batchArray[i-1]);
+                res.send(agvResponse);
+                agv2sendrouteid = agv2receive;
+                resetJSON(agvResponse);
             }
 
-            console.log("\nWith Route ID: " + strArray[31] + '\n');
+            else if (typeID_agv == typeID.station_leave && agvorigin == agv2sendrouteid){
+                cmd = "SERVER_DATA";
+                agvResponse["agvnumber"] = agv2sendrouteid;
+                agvResponse["command"] = cmd;
+                agvResponse["routeid"] = makeid(7);
+                res.send(agvResponse);
 
-            resetJSON(agvResponse);
-        }
+                console.log("\nAGV NUMBER #" + agv2sendrouteid + " IS LEAVING " + strArray[23] + ".");
+                console.log("\nClock: " + strArray[15] +'\n');
+                var batchArray = strArray[19].split(",");
+                for (i=1; i<batchArray.length + 1; i++){
+                    console.log("Batch #" + i + " = " + batchArray[i-1]);
+                }
+                console.log("");
 
-        else if (typeID_agv == typeID.message && agvorigin == agv2receive){
-            res.send(agvResponse);
-            resetJSON(agvResponse);
-        }
-         
-        else {
-            res.send(agvResponseNULL);
-        }
+                resetJSON(agvResponse);
+                agv2sendrouteid = "0";
 
-        if(!agvsArray.includes(agvorigin)){
-            agvsArray.push(agvorigin);
-            movingArray.push(moving_agv);
-            console.log('AGV added!');
-        }
-        else{
-            movingArray[agvsArray.indexOf(agvorigin)] = moving_agv;
-        }
+            }
 
-        res.end();  
-        console.log(makeid(6));
-        
-        //receives request from manager
-    } else if (src == "manager") {
+            else if (typeID_agv == typeID.station_arrive){
+                res.send(agvResponse);
 
-        agv2receive = strArray[7];
-        agvResponse["agvnumber"] = agv2receive;
+                console.log("\nAGV NUMBER #" + strArray[11] + " ARRIVED TO " + strArray[23] + ".");
+                console.log("\nClock: " + strArray[15] + '\n');
 
-        if (strArray[11] == "STOP") {
-            cmd = "STOP";
-            agvResponse["command"] = cmd;
-            res.end();
-        } else if (strArray[11] == "START") {
-            agvResponse["command"] = cmd;
-            res.end();
-        } else if (strArray[11] == "NEW_DESTINATION") {
-            cmd = "NEW_DESTINATION";
-            agvResponse["command"] = cmd;
-            agvResponse["destination"] = strArray[15];
-            agvResponse["clock"] = strArray[19];
-            agvResponse["batchid"] = strArray[23];
-            agvResponse["rework"] = strArray[27];
-            res.end();
-        } else {
+                var batchArray = strArray[19].split(",");
+                for (i=1; i<batchArray.length + 1; i++){
+                    console.log("Batch #" + i + " = " + batchArray[i-1]);
+                }
+
+                console.log("\nWith Route ID: " + strArray[31] + '\n');
+
+                resetJSON(agvResponse);
+            }
+
+            else if (typeID_agv == typeID.message && agvorigin == agv2receive){
+                res.send(agvResponse);
+                resetJSON(agvResponse);
+            }
+            
+            else {
+                res.send(agvResponseNULL);
+            }
+
+            if(!agvsArray.includes(agvorigin)){
+                agvsArray.push(agvorigin);
+                movingArray.push(moving_agv);
+                console.log('AGV added!');
+            }
+            else{
+                movingArray[agvsArray.indexOf(agvorigin)] = moving_agv;
+            }
+
+            res.end();  
+            console.log(makeid(6));
+            
+            //receives request from manager
+        } else if (src == "manager") {
+
+            agv2receive = strArray[7];
+            agvResponse["agvnumber"] = agv2receive;
+
+            if (strArray[11] == "STOP") {
+                cmd = "STOP";
+                agvResponse["command"] = cmd;
                 res.end();
-        }
-    } 
+            } else if (strArray[11] == "START") {
+                agvResponse["command"] = cmd;
+                res.end();
+            } else if (strArray[11] == "NEW_DESTINATION") {
+                cmd = "NEW_DESTINATION";
+                agvResponse["command"] = cmd;
+                agvResponse["destination"] = strArray[15];
+                agvResponse["clock"] = strArray[19];
+                agvResponse["batchid"] = strArray[23];
+                agvResponse["rework"] = strArray[27];
+                res.end();
+            } else {
+                    res.end();
+            }
+        } 
+    } else {
+        res.end();
+}
 
 });
 
