@@ -1,10 +1,11 @@
 const fs = require('fs');
+const colors = require('colors');
 const express = require("express");
 var app = express();
 
 var cmd = '0';
 var agv2receive = '0';
-var agv2sendrouteid = '0';
+
 var agvResponse = { 
     'agvnumber': '0', 
     'command': '0', 
@@ -33,6 +34,7 @@ var typeID = {'status':'0', 'station_leave':'1', 'station_arrive':'2', 'message'
 //middleware
 let mdware = (req, res, next) => {
 
+    console.log("Body:", JSON.stringify(req.body).red);
 
     if (req.body.src === 'agv'){
 
@@ -54,13 +56,13 @@ let mdware = (req, res, next) => {
             }
     
         }
-
-        // console.log("Resp:", JSON.stringify(agvResponse));
-        // console.log("Body:", JSON.stringify(req.body));
+       
 
         if(agvResponse.agvnumber == "0" && req.body.typeID == "0"){
+            //console.log("Resp:", JSON.stringify(agvResponseNULL));
             res.json(agvResponseNULL);
         } else {
+            agv2receive = req.body.AGVNo;
             next();
         }   
 
@@ -90,10 +92,12 @@ app.post("/agv", mdware, (req, res) => {
    let typeID_agv = body.typeID;
    let moving_agv = body.moving;
 
-    if (typeID_agv == typeID.status){
+    if (typeID_agv == typeID.status && agv2receive == agvorigin){
 
         res.json(agvResponse);
+        console.log("Resp:", JSON.stringify(agvResponse).green);
         resetJSON(agvResponse);
+        
 
     }
 
@@ -110,6 +114,7 @@ app.post("/agv", mdware, (req, res) => {
         };
        
         res.json(agvResponseRoute);
+        console.log("Resp:", JSON.stringify(agvResponseRoute).green);
 
         console.log("\nAGV NUMBER #" + body.AGVNo + " IS LEAVING " + body.leavingStation + ".");
         console.log("\nClock: " + body.clock +'\n');
@@ -122,7 +127,8 @@ app.post("/agv", mdware, (req, res) => {
     }
 
     else if (typeID_agv == typeID.station_arrive){
-        res.send(agvResponse);
+        res.json(agvResponse);
+        console.log("Resp:", JSON.stringify(agvResponse).green);
 
         console.log("\nAGV NUMBER #" + body.AGVNo + " ARRIVED TO " + body.arrivingStation + ".");
         console.log("\nClock: " + body.clock + '\n');
@@ -138,12 +144,14 @@ app.post("/agv", mdware, (req, res) => {
     }
 
     else if (typeID_agv == typeID.message){
-        res.send(agvResponse);
+        res.json(agvResponse);
+        console.log("Resp:", JSON.stringify(agvResponse).green);
         resetJSON(agvResponse);
     }
     
     else {
         res.json(agvResponseNULL);
+        
     }
 
     if(!agvsArray.includes(agvorigin)){

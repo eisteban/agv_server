@@ -1,4 +1,5 @@
 const fs = require('fs');
+const colors = require('colors');
 const express = require("express");
 let app = express();
 
@@ -29,6 +30,7 @@ let mdware = (req, res, next) => {
 
 app.post('/manager', mdware,  (req, res) => {
 
+    console.log("Manager:", JSON.stringify(req.body).blue);
     let body = req.body;
     let agvResponse = { 
         'agvnumber': '0', 
